@@ -1,86 +1,100 @@
-def linea_a_lista(linea):
-    lista = []
-    contador = 0
-    while contador < len(linea):
-        if not linea[contador] == '\n':
-            lista.append(linea[contador])
-        contador = contador + 1
-    return lista
+def line_to_list(line):
+    
+    list = []
+    current = 0
+    
+    while current < len(line):
+        
+        if not line[current] == '\n':
+            list.append(line[current])
+        current += 1
+        
+    return list
 
-def convertir(archivo):
-#Convierte un archivo de texto a una lista de listas. 
-    lectura = open(archivo, 'r')
-    lista_de_lineas = lectura.readlines()
-    matriz = []
-    fila = 0
-    while fila < len(lista_de_lineas):
-        matriz.append([])
-        elementos_fila = linea_a_lista(lista_de_lineas[fila])
-        columna = 0
-        while columna < len(elementos_fila):
-            matriz[fila].append(elementos_fila[columna])
-            columna = columna + 1
-        fila = fila + 1
-    return matriz
 
-def calcular_dimensiones(matriz):
-    if len(matriz) == 0:
-        dimensiones = 0, 0
+def text_to_matrix(text_file):
+    
+    read = open(text_file, 'r')
+    lines_list = read.readlines()
+    matrix = []
+    current_line = 0
+    
+    while current_line < len(lines_list):
+        
+        line_list = line_to_list(lines_list[current_line])
+        matrix.append(line_list)            
+        current_line += 1
+        
+    return matrix
+
+
+def dimensions(matrix):
+    if len(matrix) == 0:
+        dimensions = 0, 0
     else:
-        dimensiones = len(matriz), len(matriz[0])
-    return dimensiones
+        dimensions = len(matrix), len(matrix[0])
+    
+    return dimensions
 
-def paredes_en_fila(fila):
-#Cuenta la cantidad de apariciones del elemento '#' en fila.
-    cantidad, columna = 0, 0
-    while columna < len(fila):
-        if fila[columna] == '#':
-            cantidad = cantidad + 1
-        columna = columna + 1
-    return cantidad
 
-def contar_paredes(matriz):
-#Cuenta la cantidad de apariciones del elemento '#' en la matriz dada.
-    cantidad, fila = 0, 0
-    while fila < len(matriz):
-        cantidad = cantidad + paredes_en_fila(matriz[fila])
-        fila = fila + 1
-    return cantidad
+def walls_in_matrix(matrix):
 
-def cuadrado2x2(posicion):
-#Devuelve la lista de posiciones que forman el cuadrado 
-#cuya esquina superior izquierda es la posición dada.
-    cuadrado = [posicion]
-    cuadrado.append((posicion[0]+1,posicion[1]))
-    cuadrado.append((posicion[0],posicion[1]+1))
-    cuadrado.append((posicion[0]+1,posicion[1]+1))
-    return cuadrado
+    matrix_dims = dimensions(matrix)
+    count, current_row = 0, 0    
+    
+    while current_row < matrix_dims[0]:
+        
+        current_column = 0
+        while current_column < matrix_dims[1]:
 
-def son_paredes(posiciones, matriz):
-#Pre: ‘posiciones’ es una lista de posiciones válidas en ‘matriz’
-    son_paredes = True
-    i = 0
-    while i < len(posiciones) and son_paredes:
-        if matriz[posiciones[i][0]][posiciones[i][1]] != '#':
-            son_paredes = False
-        i = i + 1
-    return son_paredes
+            if matrix[current_row][current_column] == '#':
+                count += 1
+            current_column += 1
+        
+        current_row += 1
+        
+    return count
 
-def buscar_2x2_paredes(matriz):
-#Devuelve True si y solo si matriz contiene un cuadrado de 2x2 de paredes.
-#Para eso, recorremos todas las posiciones que son paredes y son esquinas 
-#superiores de un cuadrado de 2x2, y nos fijamos si ese cuadrado es de paredes.
-    dimensiones = calcular_dimensiones(matriz)
-    hay_cuadrado = False
-    fila = 0
-    while fila < dimensiones[0] - 1 and not hay_cuadrado:
-        columna = 0
-        while columna < dimensiones[1] - 1 and not hay_cuadrado:
-            if matriz[fila][columna] == '#' and son_paredes(cuadrado2x2((fila, columna)), matriz):
-                hay_cuadrado = True
-            columna = columna + 1
-        fila = fila + 1
-    return hay_cuadrado
+
+def square2x2(position):
+
+    square = [position]
+    square.append((position[0]+1, position[1]))
+    square.append((position[0], position[1]+1))
+    square.append((position[0]+1, position[1]+1))
+    return square
+
+def walls(positions, matrix):
+
+    walls = True
+    current_pos = 0
+    
+    while current_pos < len(positions) and walls:
+        
+        if matrix[positions[current_pos][0]][positions[current_pos][1]] != '#':
+            walls = False
+            
+        current_pos += 1
+    return walls
+
+def contains_2x2wall(matrix):
+
+    matrix_dims = dimensions(matrix)
+    contains = False
+    current_row = 0
+    
+    while current_row < matrix_dims[0] - 1 and not contains:
+        
+        current_column = 0
+        while current_column < matrix_dims[1] - 1 and not contains:
+            
+            if walls(square2x2((current_row, current_column)), matrix):
+                contains = True
+                
+            current_column += 1
+        current_row += 1
+        
+    return contains
 
 def es_valida_en_rango(posicion, dimensiones):
     rv = False
