@@ -1,168 +1,217 @@
-class Grilla:
-    def __init__(self, nombre_archivo):
-        if nombre_archivo == None:
-        # Esto es solo para poder hacer clones y responder correctamente 
-        # a la especificación de resolver_nurikabe.
-            self.matriz = []
-            self.dimensiones = (0, 0)
-            self.cantidad_paredes = 0
-            self.hay_2x2_paredes = False
-            self.suma_numeros = 0
-            self.cantidad_permitida_paredes = 0
+class Grid:
+    
+    def __init__(self, file_name):
+        
+        if file_name == None:
+            self.matrix = []
+            self.dims = (0, 0)
+            self.wall_count = 0
+            self.contains_2x2wall = False
+            self.numbers_sum = 0
+            self.wall_size = 0
         else:
-            self.matriz = convertir(nombre_archivo)
-            self.dimensiones = calcular_dimensiones(self.matriz)
-            self.cantidad_paredes = contar_paredes(self.matriz)
-            self.hay_2x2_paredes = buscar_2x2_paredes(self.matriz)
-            self.suma_numeros = sumar_numeros(self.matriz)
-            self.cantidad_permitida_paredes = self.dimensiones[0]*self.dimensiones[1] - self.suma_numeros
+            self.matrix = text_to_matrix(file_name)
+            self.dims = dimensions(self.matrix)
+            self.wall_count = walls_in_matrix(self.matrix)
+            self.contains_2x2wall = contains_2x2wall(self.matrix)
+            self.numbers_sum = numbers_sum(self.matrix)
+            self.wall_size = self.dims[0]*self.dims[1] - self.numbers_sum
+            
 
-    def es_posicion_valida(self, pos):
-        return es_valida_en_rango(pos, self.dimensiones)
+    def is_valid_position(self, pos):
+        return is_valid_position(pos, self.dims)
     
-    def es_numero(self, pos):
-        simbolo = self.matriz[pos[0]][pos[1]]
-        esNumero = True
-        if simbolo == '#' or simbolo == '.':
-            esNumero = False
-        return esNumero
+    def is_number(self, pos):
+        
+        symbol = self.matrix[pos[0]][pos[1]]
+        is_number = True
+        
+        if symbol == '#' or symbol == '.':
+            is_number = False
+            
+        return is_number
+
     
-    def es_pared(self, pos):
-        simbolo = self.matriz[pos[0]][pos[1]]
-        esPared = False
-        if simbolo == '#':
-            esPared = True
-        return esPared
+    def is_wall(self, pos):
+        
+        symbol = self.matrix[pos[0]][pos[1]]
+        is_wall = False
+        
+        if symbol == '#':
+            is_wall = True
+            
+        return is_wall
+
     
-    def valor(self, pos):
-        return int(self.matriz[pos[0]][pos[1]])
+    def value(self, pos):
+        return int(self.matrix[pos[0]][pos[1]])
+
     
-    def alto(self):
-        return self.dimensiones[0]
-     
-    def ancho(self):
-        return self.dimensiones[1]
+    def height(self):
+        return self.dims[0]
+
     
-    def cantidad_no_paredes(self):
-        cantidad = self.ancho()*self.alto() - self.cantidad_paredes
-        return cantidad
+    def width(self):
+        return self.dims[1]
+
     
-    def hay_cuadrado(self):
-        return self.hay_2x2_paredes
+    def no_wall_count(self):
+        return self.height()*self.width() - self.wall_count
     
-    def listar_numeros(self):
-        lista, fila = [], 0
-        while fila < self.dimensiones[0]:
-            columna = 0
-            while columna < self.dimensiones[1]:
-                if self.es_numero((fila,columna)):
-                    lista.append((fila, columna))
-                columna = columna + 1
-            fila = fila + 1
-        return lista
+    def contains_square(self):
+        return self.contains_2x2wall
+
     
-    def islas_validas(self):
-        #Trabajamos sobre una copia de la matriz para no modificar el atributo.
-        copia = copiar(self.matriz)
-        numeros = self.listar_numeros()
-        son_validas, i = True, 0
-        while i < len(numeros) and son_validas:
-            isla = []
-            isla.append(numeros[i])
-            son_validas = es_isla_valida(copia, isla)
-            i = i + 1
-        return son_validas
+    def numbers_list(self):
+        
+        list, current_row = [], 0
+        while current_row < self.dims[0]:
+            
+            current_column = 0
+            while current_column < self.dims[1]:
+                
+                if self.is_number((current_row, current_column)):
+                    list.append((current_row, current_column))
+                
+                current_column += 1
+            current_row += 1
+            
+        return list
+
     
-    def pared_conexa(self):
-        copia = copiar(self.matriz)
-        if self.cantidad_paredes == 0:
-            es_conexa = True
+    def valid_islands(self):
+        
+        clone = clone_matrix(self.matrix)
+        numbers = self.numbers_list()
+        
+        valid, current = True, 0
+        while current < len(numbers) and valid:
+            
+            island = []
+            island.append(numbers[current])
+            
+            valid = is_valid_island(clone, island)
+            current += 1
+            
+        return valid
+
+    
+    def connected_wall(self):
+        clone = clone_matrix(self.matrix)
+        
+        if self.wall_count == 0:
+            is_connected = True
         else:
-        #Comparamos la cantidad total de paredes con la de la componente conexa
-        #de una pared cualquiera.
-            es_conexa = cantidad_componente_paredes(copia) == self.cantidad_paredes
-        return es_conexa
- 
-    def listar_blancas(self):
-        #Listamos las posiciones que contienen "."
-        lista_de_blancas = []
-        fila = 0 
-        while fila < self.dimensiones[0]:
-            columna = 0
-            while columna < self.dimensiones[1]:
-                if not self.es_pared((fila,columna)) and not self.es_numero((fila,columna)):
-                    lista_de_blancas.append((fila,columna))
-                columna = columna + 1
-            fila = fila + 1
-        return lista_de_blancas
+            is_connected = connected_wall_size(clone) == self.wall_count
+        
+        return is_connected
+
     
-    def generar_clon(self):
-        clon = Grilla(None)
-        clon.matriz = copiar(self.matriz)
-        clon.dimensiones = self.dimensiones
-        clon.cantidad_paredes = self.cantidad_paredes
-        clon.hay_2x2_paredes = self.hay_2x2_paredes
-        clon.suma_numeros = self.suma_numeros
-        clon.cantidad_permitida_paredes = self.cantidad_permitida_paredes
-        return clon
+    def empty_cells_list(self):
+        
+        list, curent_row = [], 0
+        
+        while current_row < self.dims[0]:
+            
+            current_column = 0
+            while current_column < self.dims[1]:
+                
+                if not self.is_wall((current_row, current_column)) and not self.is_number((current_row, current_column)):
+                    list.append((current_row, current_column))
+                    
+                current_column += 1
+            current_row += 1
+            
+        return list
+
     
-    def poner_pared(self, posicion):
-        #Pre: La grilla no contiene cuadrados de 2x2 de paredes.        
-        #Además, las posiciones inmediata a la derecha e inmediata abajo 
-        #de la dada, de ser válidas, no son paredes.
-        #(Podemos asumir esto por la forma en que recorremos las posiciones 
-        #al hacer backtracking.)
-        if not self.es_pared(posicion):
-            self.matriz[posicion[0]][posicion[1]] = '#'
-            self.cantidad_paredes = self.cantidad_paredes + 1
-            if self.es_posicion_valida((posicion[0]-1,posicion[1]-1)):
-                cuadrado = cuadrado2x2((posicion[0]-1,posicion[1]-1))
-                self.hay_2x2_paredes = son_paredes(cuadrado, self.matriz)
+    def clone(self):
+        clone = Grid(None)
+        clone.matrix = clone_matrix(self.matrix)
+        clone.dims = self.dims
+        clone.wall_count = self.wall_count
+        clone.contains_2x2wall = self.contains_2x2wall
+        clone.numbers_sum = self.numbers_sum
+        clone.wall_size = self.wall_size
+        return clone
+
     
-    def sacar_pared(self, posicion):
-        #Pre: La grilla no contiene cuadrados de 2x2 de paredes excepto, quizás,
-        #el cuadrado cuya esquina inferior derecha es la posición dada.
-        if self.es_pared(posicion):
-            self.matriz[posicion[0]][posicion[1]] = '.'
-            self.cantidad_paredes = self.cantidad_paredes - 1
-            self.hay_2x2_paredes = False
- 
-    def es_solucion_valida(self):
-        return self.islas_validas() and self.pared_conexa() and not self.hay_2x2_paredes and self.cantidad_paredes == self.cantidad_permitida_paredes
+    def add_wall(self, position):
+        
+        if not self.is_wall(position):
+            
+            self.matrix[position[0]][position[1]] = '#'
+            self.wall_count += 1
+            
+            if self.is_valid_position((position[0]-1, position[1]-1)):
+                square = square2x2((position[0]-1, position[1]-1))
+                self.contains_2x2wall = walls(square, self.matrix)
+
     
-    def resolver_nurikabe_con_backtracking(self, blancas, contador):
-        if contador == len(blancas):
-            resultado = False
+    def remove_wall(self, position):
+        
+        if self.is_wall(position):
+            self.matrix[position[0]][position[1]] = '.'
+            self.wall_count -= 1
+            self.contains_2x2wall = False
+
+    
+    def is_valid_solution(self):
+        return self.valid_islands() and self.connected_wall() and not self.contains_2x2wall and self.wall_count == self.wall_size
+
+    
+    def backtracking_nurikabe(self, empty_cells, count):
+        
+        if count == len(empty_cells):
+            rv = False
+            
         else:
-            self.poner_pared(blancas[contador])
-            if self.hay_2x2_paredes:
-                resultado = False
-            elif self.cantidad_paredes == self.cantidad_permitida_paredes:
-                resultado = self.es_solucion_valida()
+            self.add_wall(empty_cells[count])
+            
+            if self.contains_2x2wall:
+                rv = False
+                
+            elif self.wall_count == self.wall_size:
+                rv = self.is_valid_solution()
+                
             else:
-                resultado = self.resolver_nurikabe_con_backtracking(blancas, contador + 1)
-            if not resultado:
-                self.sacar_pared(blancas[contador])
-                resultado = self.resolver_nurikabe_con_backtracking(blancas, contador + 1)
-        return resultado
+                rv = self.backtracking_nurikabe(empty_cells, count + 1)
+                
+            if not rv:
+                self.remove_wall(empty_cells[count])
+                rv = self.backtracking_nurikabe(empty_cells, count + 1)
+                
+        return rv
+
     
-    def resolver_nurikabe(self, nombre_archivo_salida):
-        #Clonamos la grilla, para no modificar la original.
-        clon = self.generar_clon()
-        archivo_a_crear = open(nombre_archivo_salida, 'w')
-        blancas = clon.listar_blancas()
-        if clon.resolver_nurikabe_con_backtracking(blancas, 0):
-            grilla_a_devolver = clon
-            fila = 0
-            while fila < clon.dimensiones[0]:
-                columna = 0
-                while columna < clon.dimensiones[1]:
-                    archivo_a_crear.write(clon.matriz[fila][columna])
-                    columna = columna + 1
-                if fila < clon.dimensiones[0] - 1:
-                    archivo_a_crear.write('\n')
-                fila = fila + 1
+    def solve_nurikabe(self, output_file_name):
+        
+        clone = self.clone()
+        output_file = open(output_file_name, 'w')
+        empty_cells = clone.empty_cells_list()
+        
+        if clone.backtracking_nurikabe(empty_cells, 0):
+            
+            output_grid = clone
+            current_row = 0
+            
+            while current_row < clone.dims[0]:
+                
+                current_column = 0
+                while current_column < clone.dims[1]:
+                    
+                    output_file.write(clone.matrix[current_row][current_column])
+                    
+                    current_column += 1
+                
+                if current_row < clone.dims[0] - 1:
+                    output_file.write('\n')
+                
+                current_row += 1
+                
         else:
-            grilla_a_devolver = Grilla(None)
-            print('La grilla dada no tiene solución. \n')
-        return grilla_a_devolver
+            
+            output_grid = Grilla(None)
+            print('The given grid admits no solution. \n')
+            
+        return output_grid
