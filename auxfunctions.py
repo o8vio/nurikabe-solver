@@ -1,8 +1,8 @@
 def line_to_list(line):
     
     list = []
-    current = 0
     
+    current = 0    
     while current < len(line):
         
         if not line[current] == '\n':
@@ -20,7 +20,7 @@ def text_to_matrix(text_file):
     current_line = 0
     
     while current_line < len(lines_list):
-        
+
         line_list = line_to_list(lines_list[current_line])
         matrix.append(line_list)            
         current_line += 1
@@ -33,7 +33,6 @@ def dimensions(matrix):
         dimensions = 0, 0
     else:
         dimensions = len(matrix), len(matrix[0])
-    
     return dimensions
 
 
@@ -46,36 +45,37 @@ def walls_in_matrix(matrix):
         
         current_column = 0
         while current_column < matrix_dims[1]:
-
+            
             if matrix[current_row][current_column] == '#':
                 count += 1
+            
             current_column += 1
-        
         current_row += 1
-        
+
     return count
 
 
 def square2x2(position):
-
     square = [position]
     square.append((position[0]+1, position[1]))
     square.append((position[0], position[1]+1))
     square.append((position[0]+1, position[1]+1))
     return square
 
-def walls(positions, matrix):
 
+def walls(positions, matrix):
+    
     walls = True
     current_pos = 0
     
     while current_pos < len(positions) and walls:
-        
+
         if matrix[positions[current_pos][0]][positions[current_pos][1]] != '#':
             walls = False
-            
         current_pos += 1
+        
     return walls
+
 
 def contains_2x2wall(matrix):
 
@@ -87,7 +87,7 @@ def contains_2x2wall(matrix):
         
         current_column = 0
         while current_column < matrix_dims[1] - 1 and not contains:
-            
+
             if walls(square2x2((current_row, current_column)), matrix):
                 contains = True
                 
@@ -96,71 +96,82 @@ def contains_2x2wall(matrix):
         
     return contains
 
-def es_valida_en_rango(posicion, dimensiones):
-    rv = False
-    if 0 <= posicion[0] < dimensiones[0] and 0 <= posicion[1] < dimensiones[1]:
-        rv = True
-    return rv
 
-def copiar(matriz):
-    dimensiones = calcular_dimensiones(matriz)
-    copia, fila = [], 0
-    while fila < dimensiones[0]:
-        copia.append([])
-        columna = 0
-        while columna < dimensiones[1]:
-            copia[fila].append(matriz[fila][columna])
-            columna = columna + 1
-        fila = fila + 1
-    return copia
+def is_valid_position(position, dims):
+    return 0 <= position[0] < dims[0] and 0 <= position[1] < dims[1]
 
-def cruz(posicion):
-#Devuelve la lista de posiciones adyacentes a la posición dada.
-#Obs: puede devolver posiciones con coordenadas negativas o que se excedan
-#de las dimensiones de la matriz que se esté considerando, pero estas serán
-#posteriormente descartadas usando la función es_valida_en_rango.
-    lista = []
-    lista.append((posicion[0]+1,posicion[1]))
-    lista.append((posicion[0]-1,posicion[1]))
-    lista.append((posicion[0],posicion[1]+1))
-    lista.append((posicion[0],posicion[1]-1))
-    return lista
 
-def es_isla_valida(matriz, isla):
-#Pre: matriz corresponde al atributo matriz de una instancia del TAD Grilla. 
-#‘isla’ es una lista que contiene la posición del número que se analizará 
-#para determinar si forma o no una isla válida.
-#Para esto, vamos agregando posiciones adyacentes que tengan '.' mientras 
-#sea posible, y cambiamos su simbolo por '#' para no volver a analizarlas.
-    dimensiones = calcular_dimensiones(matriz)
-    numero = int(matriz[isla[0][0]][isla[0][1]])
-    es_valida, checkpoint, completa = True, 0, False
-    matriz[isla[0][0]][isla[0][1]] = '#'
-    while not completa and es_valida:
-        adyacentes = cruz(isla[checkpoint])
-        checkpoint = checkpoint + 1
-        i = 0
-        while i < 4 and es_valida:
-            if es_valida_en_rango(adyacentes[i], dimensiones):
-                if matriz[adyacentes[i][0]][adyacentes[i][1]] == '.':
-                    isla.append(adyacentes[i])
-                    matriz[adyacentes[i][0]][adyacentes[i][1]] = '#'
-                elif matriz[adyacentes[i][0]][adyacentes[i][1]] == '#':
+def clone_matrix(matrix):
+    
+    dims = dimensions(matrix)
+    clone, current_row = [], 0
+    
+    while current_row < dims[0]:
+        
+        clone.append([])
+        
+        current_column = 0
+        while current_column < dims[1]:
+            
+            clone[current_row].append(matrix[current_row][current_column])
+            
+            current_column += 1
+        current_row += 1
+        
+    return clone
+
+
+def cross(position):
+    cross = []
+    cross.append((position[0]+1, position[1]))
+    cross.append((position[0]-1, position[1]))
+    cross.append((position[0], position[1]+1))
+    cross.append((position[0], position[1]-1))
+    return cross
+
+
+def is_valid_island(matrix, island):
+
+    dims = dimensions(matrix)
+    number = int(matrix[island[0][0]][island[0][1]])
+    is_valid, checkpoint, complete = True, 0, False
+    matrix[island[0][0]][island[0][1]] = '#'
+    
+    while not complete and is_valid:
+        
+        adjacent_positions = cross(island[checkpoint])
+        checkpoint += 1
+        current = 0
+        
+        while current < len(adjacent_positions) and is_valid:
+
+            current_position = adjacent_positions[current]
+            current_cell = matrix[current_position[0]][current_position[1]]
+            
+            if is_valid_position(current_position, dims):
+                
+                if current_cell == '.':
+                    island.append(current_position)
+                    matrix[current_position[0]][current_position[1]] = '#'
+                    
+                elif current_cell == '#':
                     pass
+                    
                 else:
-                    #si encontramos otro número en la isla, detenemos
-                    #la construcción de la misma y devolvemos Falso
-                    es_valida = False
-            i = i + 1
-        if len(isla) > numero:
-            #también detenemos la construcción de la isla si su tamaño excede 
-            #el de una isla válida
-            es_valida = False
-        if checkpoint == len(isla):
-            completa = True
-    if len(isla) < numero:
-        es_valida = False
-    return es_valida
+                    is_valid = False
+                    
+            current += 1
+            
+        if len(island) > number:
+            is_valid = False
+            
+        if checkpoint == len(island):
+            complete = True
+            
+    if len(island) < number:
+        is_valid = False
+        
+    return is_valid
 
 def encontrar_pared(matriz):
 #Devuelve la posición de una pared de matriz.
