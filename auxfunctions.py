@@ -173,52 +173,71 @@ def is_valid_island(matrix, island):
         
     return is_valid
 
-def encontrar_pared(matriz):
-#Devuelve la posición de una pared de matriz.
-#Pre: matriz contiene por lo menos una pared.
-    dimensiones, hay_pared = calcular_dimensiones(matriz), False
-    fila = 0
-    while fila < dimensiones[0] and not hay_pared:
-        columna = 0
-        while columna < dimensiones[1] and not hay_pared:
-            if matriz[fila][columna] == '#':
-                pared = (fila, columna)
-                hay_pared = True
-            columna = columna + 1
-        fila = fila + 1
-    return pared
 
-def cantidad_componente_paredes(matriz):
-#Pre: matriz tiene por lo menos una pared.
-#De forma muy similar a lo hecho en es_isla_valida, construimos la componente
-#conexa de una pared inicial de la matriz.
-    dimensiones = calcular_dimensiones(matriz)
-    pared_inicial = encontrar_pared(matriz)
-    componente = [pared_inicial]
-    matriz[pared_inicial[0]][pared_inicial[1]] = '.'
-    completa, checkpoint = False, 0
-    while not completa:
-        adyacentes = cruz(componente[checkpoint])
-        checkpoint = checkpoint + 1
-        i = 0
-        while i < 4:
-            if es_valida_en_rango(adyacentes[i], dimensiones) and matriz[adyacentes[i][0]][adyacentes[i][1]] == '#':
-                componente.append(adyacentes[i])
-                matriz[adyacentes[i][0]][adyacentes[i][1]] = '.'
-            i = i + 1
-        if checkpoint == len(componente):
-            completa = True
-    return len(componente)
+def find_wall(matrix):
+    
+    dims, found = dimensions(matrix), False
+    current_row = 0
+    
+    while current_row < dims[0] and not found:
+        
+        current_column = 0
+        while current_column < dims[1] and not found:
+            
+            if matrix[current_row][current_column] == '#':
+                wall = (current_row, current_column)
+                found = True
+                
+            current_column += 1
+        current_row += 1
+        
+    return wall
 
-def sumar_numeros(matriz):
-#Pre: matriz corresponde al atributo matriz de una instancia del TAD Grilla.
-    dimensiones = calcular_dimensiones(matriz)
-    suma, fila = 0, 0
-    while fila < dimensiones[0]:
-        columna = 0
-        while columna < dimensiones[1]:
-            if matriz[fila][columna] != '#' and matriz[fila][columna] != '.':
-                suma = suma + int(matriz[fila][columna])
-            columna = columna + 1
-        fila = fila + 1
-    return suma
+
+def connected_wall_size(matrix):
+    
+    dims = dimensions(matrix)
+    
+    init_wall = find_wall(matrix)
+    connected_wall = [init_wall]
+    
+    matrix[init_wall[0]][init_wall[1]] = '.'
+    
+    complete, checkpoint = False, 0
+    while not complete:
+        
+        adjacent_positions = cross(connected_wall[checkpoint])
+        checkpoint += 1
+        current = 0
+        
+        while current < 4:
+
+            current_position = adjacent_positions[current]
+            if is_valid_position(current_position, dims) and matrix[current_position[0]][current_position[1]] == '#':
+                connected_wall.append(current_position)
+                matrix[current_position[0]][current_position[1]] = '.'
+                
+            current += 1
+            
+        if checkpoint == len(connected_wall):
+            complete = True
+            
+    return len(connected_wall)
+
+
+def numbers_sum(matrix):
+
+    dims = dimensions(matrix)
+    sum, current_row = 0, 0
+    while current_row < dims[0]:
+        
+        current_column = 0
+        while current_column < dims[1]:
+            
+            if matrix[current_row][current_column] != '#' and matrix[current_row][current_column] != '.':
+                sum += int(matrix[current_row][current_column])
+                
+            current_column += 1
+        current_row += 1
+        
+    return sum
