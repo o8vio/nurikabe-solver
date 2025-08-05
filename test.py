@@ -1,5 +1,8 @@
 from auxfunctions import *
-from nurikabe import *
+from nurikabe import Grid
 
-nuri = Grid('.\puzzles\puzzle2_5x5.txt')
-nuri.solve_nurikabe('solved.txt')
+path_to_puzzle = './puzzles/puzzle5_5x5.txt'
+path_to_solved = path_to_puzzle.replace('./puzzles', './solved')
+
+nuri = Grid(path_to_puzzle)
+nuri.solve_nurikabe(path_to_solved)
